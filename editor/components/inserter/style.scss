@@ -59,6 +59,10 @@ input[type="search"].editor-inserter__search {
 		outline: none;
 		box-shadow: $button-focus-style;
 	}
+
+	.components-popover.is-mobile & {
+		padding-right: 30px;
+	}
 }
 
 .editor-inserter__category-blocks {
@@ -75,18 +79,6 @@ input[type="search"].editor-inserter__search {
 	@include break-medium {
 		width: 300px;
 		height: 320px;
-	}
-}
-
-.editor-inserter__menu.components-popover.is-center .components-popover__content {
-	@media ( max-width: #{ $break-medium - 1 } ) {
-		border-width: 0;
-		position: fixed;
-		left: 0;
-		right: 0;
-		top: $admin-bar-height-big + $header-height;
-		transform: none;
-		width: 100vw;
 	}
 }
 
