@@ -7,7 +7,7 @@ import classnames from 'classnames';
  * WordPress dependencies
  */
 import { __ } from '@wordpress/i18n';
-import { concatChildren } from '@wordpress/element';
+import { concatChildren, Component } from '@wordpress/element';
 import { Autocomplete, PanelBody } from '@wordpress/components';
 
 /**
@@ -28,75 +28,39 @@ import BlockDescription from '../../block-description';
 
 const { children } = source;
 
-registerBlockType( 'core/paragraph', {
-	title: __( 'Paragraph' ),
+class ParagraphBlock extends Component {
+	constructor() {
+		super( ...arguments );
+		this.toggleDropCap = this.toggleDropCap.bind( this );
+	}
 
-	icon: 'editor-paragraph',
+	toggleDropCap() {
+		const { attributes, setAttributes } = this.props;
+		setAttributes( { dropCap: ! attributes.dropCap } );
+	}
 
-	category: 'common',
+	render() {
+		const {
+			attributes,
+			setAttributes,
+			insertBlocksAfter,
+			focus,
+			setFocus,
+			mergeBlocks,
+			onReplace,
+		} = this.props;
 
-	keywords: [ __( 'text' ) ],
+		const {
+			align,
+			content,
+			dropCap,
+			placeholder,
+			fontSize,
+			backgroundColor,
+			textColor,
+			width,
+		} = attributes;
 
-	className: false,
-
-	attributes: {
-		content: {
-			type: 'array',
-			source: children( 'p' ),
-		},
-		align: {
-			type: 'string',
-		},
-		dropCap: {
-			type: 'boolean',
-			default: false,
-		},
-		placeholder: {
-			type: 'string',
-		},
-		width: {
-			type: 'string',
-		},
-		textColor: {
-			type: 'string',
-		},
-		backgroundColor: {
-			type: 'string',
-		},
-		fontSize: {
-			type: 'number',
-		},
-	},
-
-	transforms: {
-		from: [
-			{
-				type: 'raw',
-				isMatch: ( node ) => (
-					node.nodeName === 'P' &&
-					// Do not allow embedded content.
-					! node.querySelector( 'audio, canvas, embed, iframe, img, math, object, svg, video' )
-				),
-			},
-		],
-	},
-
-	merge( attributes, attributesToMerge ) {
-		return {
-			content: concatChildren( attributes.content, attributesToMerge.content ),
-		};
-	},
-
-	getEditWrapperProps( attributes ) {
-		const { width } = attributes;
-		if ( [ 'wide', 'full', 'left', 'right' ].indexOf( width ) !== -1 ) {
-			return { 'data-align': width };
-		}
-	},
-
-	edit( { attributes, setAttributes, insertBlocksAfter, focus, setFocus, mergeBlocks, onReplace } ) {
-		const { align, content, dropCap, placeholder, fontSize, backgroundColor, textColor, width } = attributes;
-		const toggleDropCap = () => setAttributes( { dropCap: ! dropCap } );
 		const className = dropCap ? 'has-drop-cap' : null;
 
 		return [
@@ -119,7 +83,7 @@ registerBlockType( 'core/paragraph', {
 						<ToggleControl
 							label={ __( 'Drop Cap' ) }
 							checked={ !! dropCap }
-							onChange={ toggleDropCap }
+							onChange={ this.toggleDropCap }
 						/>
 						<RangeControl
 							label={ __( 'Font Size' ) }
@@ -194,6 +158,77 @@ registerBlockType( 'core/paragraph', {
 				) }
 			</Autocomplete>,
 		];
+	}
+}
+
+registerBlockType( 'core/paragraph', {
+	title: __( 'Paragraph' ),
+
+	icon: 'editor-paragraph',
+
+	category: 'common',
+
+	keywords: [ __( 'text' ) ],
+
+	className: false,
+
+	attributes: {
+		content: {
+			type: 'array',
+			source: children( 'p' ),
+		},
+		align: {
+			type: 'string',
+		},
+		dropCap: {
+			type: 'boolean',
+			default: false,
+		},
+		placeholder: {
+			type: 'string',
+		},
+		width: {
+			type: 'string',
+		},
+		textColor: {
+			type: 'string',
+		},
+		backgroundColor: {
+			type: 'string',
+		},
+		fontSize: {
+			type: 'number',
+		},
+	},
+
+	transforms: {
+		from: [
+			{
+				type: 'raw',
+				isMatch: ( node ) => (
+					node.nodeName === 'P' &&
+					// Do not allow embedded content.
+					! node.querySelector( 'audio, canvas, embed, iframe, img, math, object, svg, video' )
+				),
+			},
+		],
+	},
+
+	merge( attributes, attributesToMerge ) {
+		return {
+			content: concatChildren( attributes.content, attributesToMerge.content ),
+		};
+	},
+
+	getEditWrapperProps( attributes ) {
+		const { width } = attributes;
+		if ( [ 'wide', 'full', 'left', 'right' ].indexOf( width ) !== -1 ) {
+			return { 'data-align': width };
+		}
+	},
+
+	edit( props ) {
+		return <ParagraphBlock { ...props } />;
 	},
 
 	save( { attributes } ) {
