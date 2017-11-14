@@ -25,18 +25,52 @@ import ToggleControl from '../../inspector-controls/toggle-control';
 import RangeControl from '../../inspector-controls/range-control';
 import ColorPalette from '../../color-palette';
 import BlockDescription from '../../block-description';
+import ContrastChecker from '../../contrast-checker';
 
 const { children } = source;
+const { getComputedStyle } = window;
 
 class ParagraphBlock extends Component {
 	constructor() {
 		super( ...arguments );
+
+		this.editableRef = null;
+
+		this.state = {
+			fallbackTextColor: undefined,
+		};
+
+		this.bindRef = this.bindRef.bind( this );
 		this.toggleDropCap = this.toggleDropCap.bind( this );
 	}
 
 	toggleDropCap() {
 		const { attributes, setAttributes } = this.props;
 		setAttributes( { dropCap: ! attributes.dropCap } );
+	}
+
+	bindRef( node ) {
+		if ( ! node ) {
+			return;
+		}
+		this.editableRef = node.querySelector( '[contenteditable="true"]' );
+	}
+
+	componentDidMount() {
+		this.grabTextColor();
+	}
+
+	componentDidUpdate() {
+		this.grabTextColor();
+	}
+
+	grabTextColor() {
+		const { textColor } = this.props.attributes;
+		const { fallbackTextColor } = this.state;
+
+		if ( ! textColor && ! fallbackTextColor && this.editableRef ) {
+			this.setState( { fallbackTextColor: getComputedStyle( this.editableRef ).color } );
+		}
 	}
 
 	render() {
@@ -60,6 +94,10 @@ class ParagraphBlock extends Component {
 			textColor,
 			width,
 		} = attributes;
+
+		const {
+			fallbackTextColor,
+		} = this.state;
 
 		const className = dropCap ? 'has-drop-cap' : null;
 
@@ -107,6 +145,11 @@ class ParagraphBlock extends Component {
 							onChange={ ( colorValue ) => setAttributes( { textColor: colorValue } ) }
 						/>
 					</PanelBody>
+					<ContrastChecker
+						textColor={ textColor || fallbackTextColor }
+						backgroundColor={ backgroundColor || '#fff' }
+						isLargeText={ fontSize >= 18 }
+					/>
 					<PanelBody title={ __( 'Block Alignment' ) }>
 						<BlockAlignmentToolbar
 							value={ width }
@@ -115,48 +158,50 @@ class ParagraphBlock extends Component {
 					</PanelBody>
 				</InspectorControls>
 			),
-			<Autocomplete key="editable" completers={ [
-				blockAutocompleter( { onReplace } ),
-				userAutocompleter(),
-			] }>
-				{ ( { isExpanded, listBoxId, activeId } ) => (
-					<Editable
-						tagName="p"
-						className={ classnames( 'wp-block-paragraph', className, {
-							[ `align${ width }` ]: width,
-							'has-background': backgroundColor,
-						} ) }
-						style={ {
-							backgroundColor: backgroundColor,
-							color: textColor,
-							fontSize: fontSize ? fontSize + 'px' : undefined,
-							textAlign: align,
-						} }
-						value={ content }
-						onChange={ ( nextContent ) => {
-							setAttributes( {
-								content: nextContent,
-							} );
-						} }
-						focus={ focus }
-						onFocus={ setFocus }
-						onSplit={ ( before, after, ...blocks ) => {
-							setAttributes( { content: before } );
-							insertBlocksAfter( [
-								...blocks,
-								createBlock( 'core/paragraph', { content: after } ),
-							] );
-						} }
-						onMerge={ mergeBlocks }
-						onReplace={ onReplace }
-						placeholder={ placeholder || __( 'Add text or type / to insert content' ) }
-						aria-autocomplete="list"
-						aria-expanded={ isExpanded }
-						aria-owns={ listBoxId }
-						aria-activedescendant={ activeId }
-					/>
-				) }
-			</Autocomplete>,
+			<div key="editable" ref={ this.bindRef }>
+				<Autocomplete completers={ [
+					blockAutocompleter( { onReplace } ),
+					userAutocompleter(),
+				] }>
+					{ ( { isExpanded, listBoxId, activeId } ) => (
+						<Editable
+							tagName="p"
+							className={ classnames( 'wp-block-paragraph', className, {
+								[ `align${ width }` ]: width,
+								'has-background': backgroundColor,
+							} ) }
+							style={ {
+								backgroundColor: backgroundColor,
+								color: textColor,
+								fontSize: fontSize ? fontSize + 'px' : undefined,
+								textAlign: align,
+							} }
+							value={ content }
+							onChange={ ( nextContent ) => {
+								setAttributes( {
+									content: nextContent,
+								} );
+							} }
+							focus={ focus }
+							onFocus={ setFocus }
+							onSplit={ ( before, after, ...blocks ) => {
+								setAttributes( { content: before } );
+								insertBlocksAfter( [
+									...blocks,
+									createBlock( 'core/paragraph', { content: after } ),
+								] );
+							} }
+							onMerge={ mergeBlocks }
+							onReplace={ onReplace }
+							placeholder={ placeholder || __( 'Add text or type / to insert content' ) }
+							aria-autocomplete="list"
+							aria-expanded={ isExpanded }
+							aria-owns={ listBoxId }
+							aria-activedescendant={ activeId }
+						/>
+					) }
+				</Autocomplete>
+			</div>,
 		];
 	}
 }
