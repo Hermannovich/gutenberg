@@ -59,10 +59,6 @@ input[type="search"].editor-inserter__search {
 		outline: none;
 		box-shadow: $button-focus-style;
 	}
-
-	.components-popover.is-mobile & {
-		padding-right: 30px;
-	}
 }
 
 .editor-inserter__category-blocks {
