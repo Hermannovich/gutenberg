@@ -37,6 +37,10 @@ registerBlockType( 'core/shortcode', {
 
 	supportHTML: false,
 
+	supports: {
+		customClassName: false,
+	},
+
 	edit: withInstanceId(
 		( { attributes, setAttributes, instanceId, focus } ) => {
 			const inputId = `blocks-shortcode-input-${ instanceId }`;
